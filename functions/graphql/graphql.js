@@ -25,17 +25,17 @@ const resolvers = {
     todos: () => {
       return Object.values(todos);
     },
-    Mutation: {
-      addTodo: (_, { text }) => {
-        todoIndex++;
-        const id = `key-${todoIndex}`;
-        todos[id] = { id, value, done: false };
-        return todos[id];
-      },
-      updateTodoDone: (_, { id }) => {
-        todos[id].done = true;
-        return todos[id];
-      },
+  },
+  Mutation: {
+    addTodo: (_, { text }) => {
+      todoIndex++;
+      const id = `key-${todoIndex}`;
+      todos[id] = { id, value, done: false };
+      return todos[id];
+    },
+    updateTodoDone: (_, { id }) => {
+      todos[id].done = true;
+      return todos[id];
     },
   },
 };

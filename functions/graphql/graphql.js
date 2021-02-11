@@ -27,7 +27,7 @@ const resolvers = {
     },
   },
   Mutation: {
-    addTodo: (_, { text }) => {
+    addTodo: (_, { value }) => {
       todoIndex++;
       const id = `key-${todoIndex}`;
       todos[id] = { id, value, done: false };

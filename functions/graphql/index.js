@@ -17,7 +17,7 @@ const server = new ApolloServer({
   resolver,
 
   playground: true,
-  intrspection: true,
+  introspection: true,
 });
 
 exports.handler = server.createHandler();

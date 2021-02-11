@@ -1,23 +1,49 @@
-const { ApolloServer, gql } = require('apollo-server-lambda');
- 
+const { ApolloServer, gql } = require("apollo-server-lambda");
+
 // Construct a schema, using GraphQL schema language
 const typeDefs = gql`
   type Query {
-    hello: String
+    todos: [Todo]!
+  }
+  type Todo {
+    id: ID!
+    value: String!
+    done: Boolean!
+  }
+  type Mutation {
+    addTodo(value: String!): Todo
+    updateTodoDone(id: ID!): Todo
   }
 `;
- 
+
+const todos = {};
+let todoIndex = 0;
+
 // Provide resolver functions for your schema fields
 const resolvers = {
   Query: {
-    hello: () => 'Hello world!',
+    todos: () => {
+      return Object.values(todos);
+    },
+    Mutation: {
+      addTodo: (_, { text }) => {
+        todoIndex++;
+        const id = `key-${todoIndex}`;
+        todos[id] = { id, value, done: false };
+        return todos[id];
+      },
+      updateTodoDone: (_, { id }) => {
+        todos[id].done = true;
+        return todos[id];
+      },
+    },
   },
 };
- 
+
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  
+
   // By default, the GraphQL Playground interface and GraphQL introspection
   // is disabled in "production" (i.e. when `process.env.NODE_ENV` is `production`).
   //
@@ -26,5 +52,5 @@ const server = new ApolloServer({
   playground: true,
   introspection: true,
 });
- 
+
 exports.handler = server.createHandler();

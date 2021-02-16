@@ -11,7 +11,35 @@ import {
   Input,
   Checkbox,
 } from "theme-ui";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import { IdentityContext } from "../../identity-context";
+
+const ADD_TODO = gql`
+  mutation AddTodo($value: String!) {
+    addTodo(value: $value) {
+      id
+    }
+  }
+`;
+
+const UPDATE_TODO_DONE = gql`
+  mutation UpdateTodoDone($id: ID!) {
+    updateTodoDone(id: $id) {
+      text
+      done
+    }
+  }
+`;
+
+const GET_TODOS = gql`
+  query GetTodos {
+    todos {
+      id
+      value
+      done
+    }
+  }
+`;
 
 const todoReducer = (state, action) => {
   switch (action.type) {
@@ -24,7 +52,7 @@ const todoReducer = (state, action) => {
         },
         ...state,
       ];
-    case "TOGGLE_TODO":
+    case "UPDATE_TODO_DONE":
       const newState = [...state];
       newState[action.payload] = {
         done: !state[action.payload].done,
@@ -41,6 +69,9 @@ let Dash = () => {
   const [todo, dispatch] = useReducer(todoReducer, []);
   const { user } = useContext(IdentityContext);
   const { identity: netlifyIdentity } = useContext(IdentityContext);
+  const [addTodo] = useMutation(ADD_TODO);
+  const [updateTodoDone] = useMutation(UPDATE_TODO_DONE);
+  const { loading, error, data, refetch } = useQuery(GET_TODOS);
 
   return (
     <Container>
@@ -67,14 +98,12 @@ let Dash = () => {
       <span>Dash hasUser: {user && user.user_metadata.full_name}</span>
       <Flex
         as="form"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          if (!Inputref.current.value == "") {
-            dispatch({
-              type: "ADD_TODO",
-              payload: Inputref.current.value,
-            });
+          if (Inputref.current.value !== "") {
+            await addTodo({ variables: { value: Inputref.current.value } });
             Inputref.current.value = "";
+            await refetch();
           }
         }}
       >
@@ -84,22 +113,26 @@ let Dash = () => {
         <Button type="submit">Submit</Button>
       </Flex>
       <Flex sx={{ flexDirection: "column" }}>
-        <ul>
-          {todo.map((data, i) => (
-            <Flex
-              as="li"
-              onClick={() => {
-                dispatch({
-                  type: "TOGGLE_TODO",
-                  payload: i,
-                });
-              }}
-            >
-              <Checkbox checked={data.done} />
-              <span>{data.value}</span>
-            </Flex>
-          ))}
-        </ul>
+        {loading ? <div>Loading...</div> : null}
+        {error ? <div>{error.message}</div> : null}
+        {!loading && !error && (
+          <ul>
+            {data.todos.map((data) => (
+              <Flex
+                key={data.id}
+                as="li"
+                onClick={async () => {
+                  await updateTodoDone({ variables: { id: data.id } });
+                  console.log(data.id);
+                  await refetch();
+                }}
+              >
+                <Checkbox checked={data.done} />
+                <span>{data.value}</span>
+              </Flex>
+            ))}
+          </ul>
+        )}
       </Flex>
     </Container>
   );

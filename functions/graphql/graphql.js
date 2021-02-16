@@ -1,6 +1,7 @@
 const { ApolloServer, gql } = require("apollo-server-lambda");
 
 const faunadb = require("faunadb");
+const q = faunadb.query;
 
 var client = new faunadb.Client({ secret: process.env.FAUNA });
 
@@ -20,8 +21,6 @@ const typeDefs = gql`
   }
 `;
 
-const todos = {};
-
 // Provide resolver functions for your schema fields
 const resolvers = {
   Query: {
@@ -32,13 +31,13 @@ const resolvers = {
         const results = await client.query(
           q.Paginate(q.Match(q.Index("todos_by_user"), user))
         );
-        return results.data.map(([ref, value, done]) => {
-          {
-            id: ref.id, value, done;
-          }
-        });
+        return results.data.map(([ref, value, done]) => ({
+          id: ref.id,
+          value,
+          done
+        }));
       }
-    },
+    }
   },
   Mutation: {
     addTodo: async (_, { value }, { user }) => {
@@ -50,13 +49,13 @@ const resolvers = {
           data: {
             value,
             done: false,
-            owner: user,
-          },
+            owner: user
+          }
         })
       );
       return {
         ...results.data,
-        id: results.ref.id,
+        id: results.ref.id
       };
     },
     updateTodoDone: async (_, { id }, { user }) => {
@@ -66,17 +65,16 @@ const resolvers = {
       const results = await client.query(
         q.Update(q.Ref(q.Collection("todos"), id), {
           data: {
-            done: true,
-          },
+            done: true
+          }
         })
       );
-
       return {
         ...results.data,
-        id: results.ref.id,
+        id: results.ref.id
       };
-    },
-  },
+    }
+  }
 };
 
 const server = new ApolloServer({

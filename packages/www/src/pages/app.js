@@ -43,7 +43,7 @@ const GET_TODOS = gql`
 
 const todoReducer = (state, action) => {
   switch (action.type) {
-    case "ADD_TODO":
+    case "add":
       return [
         {
           done: false,
@@ -52,7 +52,7 @@ const todoReducer = (state, action) => {
         },
         ...state,
       ];
-    case "UPDATE_TODO_DONE":
+    case "toggletodo":
       const newState = [...state];
       newState[action.payload] = {
         done: !state[action.payload].done,
@@ -117,18 +117,19 @@ let Dash = () => {
         {error ? <div>{error.message}</div> : null}
         {!loading && !error && (
           <ul>
-            {data.todos.map((data) => (
+            {data.todos.map((todo) => (
               <Flex
-                key={data.id}
+                key={todo.id}
                 as="li"
                 onClick={async () => {
-                  await updateTodoDone({ variables: { id: data.id } });
-                  console.log(data.id);
+                  console.log("updateTodoDone");
+                  await updateTodoDone({ variables: { id: todo.id } });
+                  console.log("refetching");
                   await refetch();
                 }}
               >
-                <Checkbox checked={data.done} />
-                <span>{data.value}</span>
+                <Checkbox checked={todo.done} />
+                <span>{todo.value}</span>
               </Flex>
             ))}
           </ul>
